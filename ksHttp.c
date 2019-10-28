@@ -33,12 +33,32 @@
                                                 \
     } while(0)
 
+enum ksHttpStatus
+{
+
+    KS_HTTP_STATUS_UNKNOWN,
+    KS_HTTP_STATUS_OK,
+    KS_HTTP_STATUS_NOT_FOUND,
+    KS_HTTP_STATUS_MAX
+
+};
+
+const char *ksHttpStatusStr[KS_HTTP_STATUS_MAX] =
+{
+
+    "",
+    "200 OK",
+    "404 Not Found"
+
+};
+
 typedef struct _ksSessionStateless
 {
 
     int     acc;
     char    uri     [KS_HTTP_URI_MAX];
     char    host    [KS_HTTP_HOST_MAX];
+    int     status;
 
     enum {
 
@@ -532,23 +552,31 @@ int ksHttpThreadIOWrite(ksSessionStateless *s)
 
         case KS_HTTP_WSTAGE_INIT:
 
-            if (s->rstage >= KS_HTTP_RSTAGE_BODY) {
+            if (s->status == KS_HTTP_STATUS_UNKNOWN) {
 
-                s->wstage = KS_HTTP_WSTAGE_HEADER;
+                KS_SLEEP(100);
 
             } else {
 
-                KS_SLEEP(100);
+                s->wstage = KS_HTTP_WSTAGE_HEADER;
 
             }
             break;
 
         case KS_HTTP_WSTAGE_HEADER:
 
-            sprintf(buff, "HTTP/1.1 200 OK\n\n");
+            sprintf(buff, "HTTP/1.1 %s\n\n", ksHttpStatusStr[s->status]);
             send(s->acc, buff, strlen(buff), 0);
 
-            s->wstage = KS_HTTP_WSTAGE_BODY;
+            if (s->status == KS_HTTP_STATUS_OK) {
+
+                s->wstage = KS_HTTP_WSTAGE_BODY;
+
+            } else {
+
+                s->wstage = KS_HTTP_WSTAGE_FINISH;
+
+            }
             break;
 
         case KS_HTTP_WSTAGE_BODY:
@@ -616,11 +644,12 @@ int ksHttpDoGet(ksSessionStateless *s)
 
     if (NULL == (fp = fopen(filename, "r"))) {
 
-        /* todo 404 not found */
-
+        s->status = KS_HTTP_STATUS_NOT_FOUND;
         return KS_NG;
 
     }
+
+    s->status = KS_HTTP_STATUS_OK;
 
     while (siz = fread(buff, 1, KS_BUFFER_BLOCK_MAX, fp)) {
 
@@ -690,6 +719,7 @@ int ksHttpAcceptAndRespond(int acc)
         s->wstage   = KS_HTTP_WSTAGE_INIT;
         s->method   = KS_HTTP_METHOD_UNKNOWN;
         s->version  = KS_HTTP_VERSION_UNKNOWN;
+        s->status   = KS_HTTP_STATUS_UNKNOWN;
 
         if (KS_OK != ksBufferInit(&s->bufferin)) {
 
