@@ -294,7 +294,7 @@ int ksHttpGetURI(const char *data, const int datalen, char *uri, const int urile
 
     if (pos < urilen) {
 
-        buff[pos] = 0x00;
+        uri[pos] = 0x00;
 
     } else {
 
