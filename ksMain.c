@@ -48,7 +48,7 @@ int ksListen(int *soc)
     const char *port = "80";
 
     struct addrinfo hints, *res = NULL;
-    int opt, ret, retval = KS_OK;
+    int opt, ret = KS_OK;
     char nbuff[NI_MAXHOST], sbuff[NI_MAXSERV];
 
     if (soc)    *soc = -1;
@@ -60,7 +60,7 @@ int ksListen(int *soc)
     hints.ai_flags      = AI_PASSIVE;
     hints.ai_socktype   = SOCK_STREAM;
 
-    if (0 != (ret = getaddrinfo(NULL, port, &hints, &res))) {
+    if (0 != getaddrinfo(NULL, port, &hints, &res)) {
 
         return KS_NG;
 
@@ -68,17 +68,17 @@ int ksListen(int *soc)
 
     do {
 
-        if (0 != (ret = getnameinfo(res->ai_addr, res->ai_addrlen,
-            nbuff, sizeof(nbuff), sbuff, sizeof(sbuff), NI_NUMERICHOST | NI_NUMERICSERV))) {
+        if (0 != getnameinfo(res->ai_addr, res->ai_addrlen,
+            nbuff, sizeof(nbuff), sbuff, sizeof(sbuff), NI_NUMERICHOST | NI_NUMERICSERV)) {
 
-            retval = KS_NG;
+            ret = KS_NG;
             break;
 
         }
 
         if (-1 == (*soc = socket(res->ai_family, res->ai_socktype, res->ai_protocol))) {
 
-            retval = KS_NG;
+            ret = KS_NG;
             break;
 
         }
@@ -87,28 +87,28 @@ int ksListen(int *soc)
 
         if (-1 == setsockopt(*soc, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
 
-            retval = KS_NG;
+            ret = KS_NG;
             break;
 
         }
 
         if (-1 == bind(*soc, res->ai_addr, res->ai_addrlen)) {
 
-            retval = KS_NG;
+            ret = KS_NG;
             break;
 
         }
 
         if (-1 == listen(*soc, SOMAXCONN)) {
 
-            retval = KS_NG;
+            ret = KS_NG;
             break;
 
         }
 
     } while(0);
 
-    if (retval != KS_OK && -1 != *soc) {
+    if (KS_OK != ret && -1 != *soc) {
 
         close(*soc);
         *soc = -1;
@@ -121,7 +121,7 @@ int ksListen(int *soc)
 
     }
 
-    return retval;
+    return ret;
 
 }
 
@@ -144,7 +144,7 @@ int main(int argc, const char* argv[])
 
         len = (socklen_t)sizeof(from);
 
-        if (-1 == (acc = accept(soc, (struct sockaddr *)&from, &len))) {
+        if (-1 == (acc = accept(soc, (struct sockaddr*)&from, &len))) {
             continue;
         }
 
@@ -152,14 +152,15 @@ int main(int argc, const char* argv[])
             break;
         }
 
-        if (KS_OK != ksHttpAcceptAndRespond(acc)) {
+        if (KS_OK != ksHttpRespond(acc)) {
             break;
         }
 
         close(acc);
-        acc = 0;
 
     }
+
+    close(soc);
 
     return 0;
 

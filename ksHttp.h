@@ -8,7 +8,7 @@
 #ifndef __KS_HTTP_H__
 #define __KS_HTTP_H__
 
-int ksHttpAcceptAndRespond(int acc);
+int ksHttpRespond(int acc);
 
 #endif // __KS_HTTP_H__
 

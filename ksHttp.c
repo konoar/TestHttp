@@ -702,7 +702,7 @@ void* ksHttpThreadTask(void *param)
 
 }
 
-int ksHttpAcceptAndRespond(int acc)
+int ksHttpRespond(int acc)
 {
 
     ksSessionStateless *s = NULL;
