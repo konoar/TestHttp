@@ -49,7 +49,6 @@ int ksListen(int *soc)
 
     struct addrinfo hints, *res = NULL;
     int opt, ret = KS_OK;
-    char nbuff[NI_MAXHOST], sbuff[NI_MAXSERV];
 
     if (soc)    *soc = -1;
     else        return KS_NG;
@@ -67,6 +66,8 @@ int ksListen(int *soc)
     }
 
     do {
+
+        char nbuff[NI_MAXHOST], sbuff[NI_MAXSERV];
 
         if (0 != getnameinfo(res->ai_addr, res->ai_addrlen,
             nbuff, sizeof(nbuff), sbuff, sizeof(sbuff), NI_NUMERICHOST | NI_NUMERICSERV)) {
@@ -128,11 +129,7 @@ int ksListen(int *soc)
 int main(int argc, const char* argv[])
 {
 
-    struct sockaddr_storage from;
-    socklen_t len;
-
     int soc, acc;
-    char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
 
     if (KS_OK != ksListen(&soc)) {
 
@@ -141,6 +138,9 @@ int main(int argc, const char* argv[])
     }
 
     while(1) {
+
+        struct sockaddr_storage from;
+        socklen_t len;
 
         len = (socklen_t)sizeof(from);
 
